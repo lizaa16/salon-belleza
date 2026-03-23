@@ -298,6 +298,7 @@ return [
     |
     */
 
+    /*
     'menu' => [
         // Navbar items:
         [
@@ -391,6 +392,52 @@ return [
             'text' => 'information',
             'icon_color' => 'cyan',
             'url' => '#',
+        ],
+    ],
+    */
+
+    'menu' => [
+        [
+            'header' => 'PRINCIPAL',
+        ],
+        [
+            'text' => 'Dashboard',
+            'url'  => 'dashboard',
+            'icon' => 'fas fa-tachometer-alt',
+        ],
+
+        [
+            'header' => 'GESTIÓN',
+        ],
+        [
+            'text'    => 'Empleados',
+            'url'     => 'admin/empleados',
+            'icon'    => 'fas fa-user-tie',
+        ],
+        [
+            'text'    => 'Clientes',
+            'url'     => 'admin/clientes',
+            'icon'    => 'fas fa-users',
+        ],
+
+        [
+            'header' => 'SERVICIOS',
+        ],
+        [
+            'text'        => 'Servicios',
+            'icon'        => 'fas fa-cut',
+            'submenu'     => [
+                [
+                    'text' => 'Categorías',
+                    'url'  => 'admin/categorias',
+                    'icon' => 'fas fa-tags',
+                ],
+                [
+                    'text' => 'Servicios',
+                    'url'  => 'admin/servicios',
+                    'icon' => 'fas fa-list',
+                ],
+            ],
         ],
     ],
 

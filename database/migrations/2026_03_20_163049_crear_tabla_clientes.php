@@ -13,6 +13,7 @@ return new class extends Migration
             $table->foreignId('persona_id')->constrained('personas')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->text('notas')->nullable();
+            $table->boolean('activo')->default(true);
             $table->timestamps();
         });
     }

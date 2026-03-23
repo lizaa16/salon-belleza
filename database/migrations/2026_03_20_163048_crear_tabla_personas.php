@@ -14,9 +14,11 @@ return new class extends Migration
             $table->string('apellido');
             $table->string('telefono')->nullable();
             $table->string('documento')->nullable();
+            $table->string('email')->unique();
             $table->date('fecha_nacimiento')->nullable();
             $table->string('direccion')->nullable();
             $table->timestamps();
+            $table->boolean('activo')->default(true);
         });
     }
 

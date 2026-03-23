@@ -7,6 +7,7 @@ class Persona extends Model
     protected $fillable = [
         'nombre', 'apellido', 'telefono',
         'documento', 'fecha_nacimiento', 'direccion',
+        'email', 'activo'
     ];
 
     public function empleado()

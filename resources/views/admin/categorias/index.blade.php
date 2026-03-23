@@ -35,15 +35,16 @@
                             <td>{{ $categoria->descripcion ?? '-' }}</td>
                             <td>
                                 <a href="{{ route('admin.categorias.edit', $categoria) }}"
-                                   class="btn btn-warning btn-sm">Editar</a>
+                                   class="btn btn-warning btn-sm" title="Editar Datos"><i class="fas fa-edit"></i>
+                                </a>
 
                                 <form action="{{ route('admin.categorias.destroy', $categoria) }}"
                                       method="POST" style="display:inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm"
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Eliminar Categoría"
                                         onclick="return confirm('¿Eliminar esta categoría?')">
-                                        Eliminar
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </td>

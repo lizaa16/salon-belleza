@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cliente extends Model
 {
-    protected $fillable = ['persona_id', 'user_id', 'notas'];
+    protected $fillable = ['persona_id', 'notas', 'activo'];
 
     public function persona()
     {

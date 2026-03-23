@@ -1,12 +1,21 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Cita extends Model
 {
     protected $fillable = [
-        'cliente_id', 'empleado_id', 'servicio_id',
-        'fecha_hora', 'estado', 'notas',
+        'cliente_id',
+        'empleado_id',
+        'servicio_id',
+        'fecha_hora',
+        'estado',
+        'notas',
+        'seña_monto',
+        'seña_metodo_pago',
+        'reagendado_de',
     ];
 
     public function cliente()
@@ -19,9 +28,14 @@ class Cita extends Model
         return $this->belongsTo(Empleado::class);
     }
 
-    public function servicio()
+    public function detalles()
     {
-        return $this->belongsTo(Servicio::class);
+        return $this->hasMany(CitaDetalle::class);
+    }
+
+    public function citaOriginal()
+    {
+        return $this->belongsTo(Cita::class, 'reagendado_de');
     }
 
     public function venta()
