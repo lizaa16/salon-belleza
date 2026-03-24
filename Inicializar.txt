@@ -1,0 +1,5 @@
+user: admin@salonbelleza.com
+pass: admin1234
+
+//para correr el proyecto
+php artisan serve

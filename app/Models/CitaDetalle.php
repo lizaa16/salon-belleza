@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class CitaDetalle extends Model
 {
+    protected $table = 'cita_detalles';
+    
     protected $fillable = [
         'cita_id',
         'servicio_id',

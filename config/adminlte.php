@@ -437,6 +437,11 @@ return [
                     'url'  => 'admin/servicios',
                     'icon' => 'fas fa-list',
                 ],
+                [
+                    'text' => 'Citas',
+                    'url'  => 'admin/citas',
+                    'icon' => 'fas fa-calendar-check',
+                ],
             ],
         ],
     ],

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\ServicioController;
 use App\Http\Controllers\Admin\PersonaController;
 use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Admin\CitaController;
 
 
 Route::get('/', function () {
@@ -24,18 +25,27 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function() {
         Route::resource('categorias', CategoriaServicioController::class)
         ->names('categorias');
+
         Route::resource('servicios', ServicioController::class)
         ->names('servicios');
+
         Route::resource('personas', PersonaController::class)
         ->names('personas');
+
         Route::resource('clientes', ClienteController::class)
         ->names('clientes');
+
         Route::resource('empleados', EmpleadoController::class)
         ->names('empleados');
             Route::get('empleados/{empleado}/password', [EmpleadoController::class, 'editPassword'])
             ->name('empleados.password.edit');
             Route::put('empleados/{empleado}/password', [EmpleadoController::class, 'updatePassword'])
             ->name('empleados.password.update');
+
+        Route::resource('citas', CitaController::class)
+            ->names('citas');
+        Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
+            ->name('citas.cancelar');
     });
 
 });
