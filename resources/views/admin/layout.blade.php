@@ -11,25 +11,25 @@
         --sidebar-color: {{ $globalSettings['sidebar_color'] ?? '#1a1a1a' }};
     }
 
-    /* 1. Cambiar el color del Sidebar (Barra lateral) */
+    /* Cambiar el color del Sidebar (Barra lateral) */
     .main-sidebar { 
         background-color: var(--sidebar-color) !important; 
     }
 
-    /* 2. Cambiar el color de los botones principales */
+    /* Cambiar el color de los botones principales */
     .btn-primary {
         background-color: var(--primary-color) !important;
         border-color: var(--primary-color) !important;
     }
 
-    /* 3. Cambiar el color de los elementos activos del menú */
+    /* Cambiar el color de los elementos activos del menú */
     .nav-pills .nav-link.active, 
     .page-item.active .page-link {
         background-color: var(--primary-color) !important;
         border-color: var(--primary-color) !important;
     }
 
-    /* 4. El logo (Brand Link) */
+    /* El logo (Brand Link) */
     .brand-link {
         background-color: var(--sidebar-color) !important;
         color: #fff !important;

@@ -447,6 +447,14 @@ return [
             'url'     => 'admin/citas',
             'icon'    => 'fas fa-calendar-check',
         ],
+        [
+            'header' => 'CONFIGURACIÓN',
+        ],
+        [
+            'text' => 'Configuración Visual',
+            'url'  => 'admin/configuracion',
+            'icon' => 'fas fa-fw fa-paint-brush',
+        ],
     ],
 
     /*

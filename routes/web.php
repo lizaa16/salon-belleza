@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\PersonaController;
 use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\Admin\CitaController;
+use App\Http\Controllers\Admin\SettingController;
 
 
 Route::get('/', function () {
@@ -46,6 +47,11 @@ Route::middleware('auth')->group(function () {
             ->names('citas');
         Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
             ->name('citas.cancelar');
+
+        Route::get('configuracion', [SettingController::class, 'index'])
+        ->name('settings.index');
+        Route::post('configuracion', [SettingController::class, 'update'])
+        ->name('settings.update');
     });
 
 });
