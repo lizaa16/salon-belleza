@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Nuevo Cliente')
 
@@ -6,7 +6,7 @@
     <h1>Nuevo Cliente</h1>
 @stop
 
-@section('content')
+@section('admin_content')
     <div class="card">
         <div class="card-body">
 

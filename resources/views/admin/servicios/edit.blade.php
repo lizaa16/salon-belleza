@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Editar Servicio')
 
@@ -6,7 +6,7 @@
     <h1>Editar Servicio</h1>
 @stop
 
-@section('content')
+@section('admin_content')
     <div class="card">
         <div class="card-body">
             <form action="{{ route('admin.servicios.update', $servicio) }}" method="POST">

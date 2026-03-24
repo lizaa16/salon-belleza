@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Gestionar Acceso')
 
@@ -6,7 +6,7 @@
     <h1>Gestionar Acceso: {{ $empleado->persona->nombre }} {{ $empleado->persona->apellido }}</h1>
 @stop
 
-@section('content')
+@section('admin_content')
     <div class="row">
         <div class="col-md-6">
             <div class="card card-info">

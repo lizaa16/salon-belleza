@@ -436,13 +436,16 @@ return [
                     'text' => 'Servicios',
                     'url'  => 'admin/servicios',
                     'icon' => 'fas fa-list',
-                ],
-                [
-                    'text' => 'Citas',
-                    'url'  => 'admin/citas',
-                    'icon' => 'fas fa-calendar-check',
-                ],
+                ]
             ],
+        ],
+        [
+            'header' => 'AGENDA',
+        ],
+        [
+            'text'    => 'Agendar Citas',
+            'url'     => 'admin/citas',
+            'icon'    => 'fas fa-calendar-check',
         ],
     ],
 

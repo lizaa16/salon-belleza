@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Servicios')
 
@@ -6,7 +6,7 @@
     <h1>Servicios</h1>
 @stop
 
-@section('content')
+@section('admin_content')
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Nueva Categoría')
 
@@ -6,7 +6,7 @@
     <h1>Nueva Categoría</h1>
 @stop
 
-@section('content')
+@section('admin_content')
     <div class="card">
         <div class="card-body">
             <form action="{{ route('admin.categorias.store') }}" method="POST">
