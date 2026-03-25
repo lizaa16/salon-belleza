@@ -68,9 +68,9 @@ Route::middleware('auth')->group(function () {
             Route::post('cajas/movimiento', [CajaController::class, 'registrarMovimiento'])
                 ->name('cajas.movimiento');
 
-        // Rutas para las ventas 
-        Route::get('ventas/create', [VentaController::class, 'create'])
-            ->name('ventas.create');
+        // Rutas para ventas
+        Route::resource('ventas', VentaController::class)
+            ->names('ventas');
         
     });
 

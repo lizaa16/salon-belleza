@@ -472,10 +472,10 @@ return [
             'header' => 'VENTAS',
         ],
         [
-            'text' => 'Punto de Venta',
+            'text' => 'Registrar Venta',
             'url'  => 'admin/ventas',
-            'icon' => 'fas fa-fw fa-door-open',
-        ],
+            'icon' => 'fas fa-fw fa-shopping-cart',
+        ]
     ],
 
     /*

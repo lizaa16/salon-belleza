@@ -1,145 +1,271 @@
-@extends('adminlte::page')
+@extends('admin.layout')
 
 @section('title', 'Nueva Venta')
 
+@section('content_header')
+    <h1><i class="fas fa-shopping-cart"></i> Nueva Venta</h1>
+@stop
+
 @section('admin_content')
-<div class="row">
-    <div class="col-md-7">
-        <div class="card" style="background-color: var(--sidebar-color); color: white; border-top: 3px solid var(--primary-color);">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-magic"></i> Servicios y Productos</h3>
-            </div>
-            <div class="card-body">
-                <label>Accesos Rápidos</label>
-                <div class="d-flex flex-wrap mb-4" style="gap: 10px;">
-                    @foreach($servicios->take(4) as $sv)
-                        <button type="button" class="btn btn-outline-light btn-lg flex-fill" 
-                                onclick="agregarItem('serv', {{ $sv->id }}, '{{ $sv->nombre }}', {{ $sv->precio }}, {{ $sv->iva ?? 10 }})">
-                            <i class="fas fa-star text-warning"></i><br>
-                            <small>{{ $sv->nombre }}</small><br>
-                            <strong>{{ number_format($sv->precio, 0, ',', '.') }}</strong>
-                        </button>
-                    @endforeach
+<form action="{{ route('admin.ventas.store') }}" method="POST" id="formVenta">
+    @csrf
+    {{-- Campo oculto para enviar los items y los pagos como JSON --}}
+    <input type="hidden" name="items_json" id="items_json">
+    <input type="hidden" name="pagos_json" id="pagos_json">
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card card-outline card-dark" style="border-top: 3px solid var(--primary-color);">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label>Cliente</label>
+                            <select name="cliente_id" id="cliente_id" class="form-control select2">
+                                <option value="">Cliente Ocasional</option>
+                                @foreach($clientes as $c)
+                                    {{-- Accedemos a través de la relación 'persona' --}}
+                                    <option value="{{ $c->id }}">
+                                        {{ $c->persona->nombre }} {{ $c->persona->apellido }} - {{ $c->persona->documento }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <!-- <div class="col-md-3">
+                            <label>Fecha</label>
+                            <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}">
+                        </div> -->
+                        <div class="col-md-5" id="seccion_citas" style="display:none;">
+                            <label class="text-primary">Citas Pendientes de este Cliente</label>
+                            <select id="select_citas_pendientes" class="form-control">
+                                </select>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <hr style="border-top: 1px solid #444;">
+        <div class="col-md-8">
+            <div class="card bg-dark">
+                <div class="card-header border-bottom border-secondary">
+                    <h3 class="card-title">Detalle de la Venta</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="p-3">
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-primary" onclick="abrirModalServicios()">
+                                ➕ Servicio
+                            </button>
 
-                <div class="form-group">
-                    <label>Buscador General (F2)</label>
-                    <select id="buscador_general" class="form-control select2">
-                        <option value="">Buscar servicio o producto...</option>
-                        <optgroup label="Servicios">
-                            @foreach($servicios as $sv)
-                                <option value="serv-{{ $sv->id }}" data-tipo="serv" data-id="{{ $sv->id }}" data-nombre="{{ $sv->nombre }}" data-precio="{{ $sv->precio }}" data-iva="{{ $sv->iva ?? 10 }}">
-                                    [S] {{ $sv->nombre }} - {{ number_format($sv->precio, 0, ',', '.') }} Gs.
-                                </option>
-                            @endforeach
-                        </optgroup>
-                        <optgroup label="Productos">
-                            @foreach($productos as $prod)
-                                <option value="prod-{{ $prod->id }}" data-tipo="prod" data-id="{{ $prod->id }}" data-nombre="{{ $prod->nombre }}" data-precio="{{ $prod->precio_venta }}" data-iva="{{ $prod->iva ?? 10 }}">
-                                    [P] {{ $prod->nombre }} - {{ number_format($prod->precio_venta, 0, ',', '.') }} Gs. (Stock: {{ $prod->stock_actual }})
-                                </option>
-                            @endforeach
-                        </optgroup>
-                    </select>
+                            <button type="button" class="btn btn-success" onclick="abrirModalProductos()">
+                                ➕ Producto
+                            </button>
+
+                            <button type="button" class="btn btn-info" onclick="abrirModalCitas()">
+                                🔗 Cita
+                            </button>
+                        </div>
+                    </div>
+                    <table class="table table-dark m-0">
+                        <thead>
+                            <tr>
+                                <th>Descripción</th>
+                                <th>Precio</th>
+                                <th width="100">Cant.</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla_detalle"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card card-primary card-outline">
+                <div class="card-body text-center">
+                    <h5>TOTAL A PAGAR</h5>
+                    <h2 id="total_venta" style="color: var(--primary-color);">0 Gs.</h2>
+                </div>
+            </div>
+
+            <div class="card bg-dark">
+                <div class="card-header border-secondary">
+                    <h3 class="card-title">Medios de Pago</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-7">
+                            <select id="metodo_pago" class="form-control form-control-sm">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta (POS)</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="seña">Usar Seña</option>
+                            </select>
+                        </div>
+                        <div class="col-5">
+                            <button type="button" class="btn btn-sm btn-primary btn-block" onclick="agregarPago()">+ Agregar</button>
+                        </div>
+                    </div>
+                    
+                    <ul class="list-group list-group-flush" id="lista_pagos">
+                        </ul>
+
+                    <div class="mt-3 text-center">
+                        <p>Restante: <span id="pago_restante" class="text-danger font-weight-bold">0 Gs.</span></p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success btn-block btn-lg" id="btn_finalizar" disabled>
+                        <i class="fas fa-check-double"></i> FINALIZAR VENTA
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="col-md-5">
-        <div class="card card-dark">
-            <div class="card-header border-0">
-                <h3 class="card-title"><i class="fas fa-shopping-cart text-primary"></i> Detalle de Venta</h3>
+</form>
+    <div class="modal fade" id="modalServicios">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5>Seleccionar Servicio</h5>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-dark m-0" id="tabla_venta">
-                    <thead>
-                        <tr style="color: var(--primary-color);">
-                            <th>Ítem</th>
-                            <th width="80">Cant.</th>
-                            <th width="100">Subtotal</th>
-                            <th width="30"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="detalle_venta">
-                        </tbody>
-                </table>
+            <div class="modal-body">
+                @foreach($servicios as $s)
+                    <button class="btn btn-block btn-outline-primary mb-2"
+                        onclick="agregarItem({{ $s->id }}, 'serv', '{{ $s->nombre }}', {{ $s->precio }})">
+                        {{ $s->nombre }} - {{ number_format($s->precio,0,',','.') }} Gs
+                    </button>
+                @endforeach
             </div>
-            <div class="card-footer" style="background-color: #222;">
-                <div class="d-flex justify-content-between h4">
-                    <span>TOTAL:</span>
-                    <span id="txt_total" style="color: var(--primary-color);">0 Gs.</span>
-                </div>
-                <button class="btn btn-primary btn-block btn-lg mt-3" data-toggle="modal" data-target="#modalCobro">
-                    <i class="fas fa-money-check-alt"></i> PROCEDER AL COBRO
-                </button>
             </div>
         </div>
     </div>
-</div>
+    <div class="modal fade" id="modalProductos">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5>Seleccionar Producto</h5>
+            </div>
+            <div class="modal-body">
+                @foreach($productos as $p)
+                    <button class="btn btn-block btn-outline-primary mb-2"
+                        onclick="agregarItem({{ $p->id }}, 'prod', '{{ $p->nombre }}', {{ $p->precio_venta }})">
+                        {{ $p->nombre }} - {{ number_format($p->precio_venta,0,',','.') }} Gs
+                    </button>
+                @endforeach
+            </div>
+            </div>
+        </div>
+    </div>
 @stop
 
 @push('js')
 <script>
     let items = [];
+    let pagos = [];
+
+    function renderTodo() {
+        // Render Detalle
+        let htmlItems = '';
+        let totalItems = 0;
+        items.forEach((it, idx) => {
+            let sub = it.precio * it.cantidad;
+            totalItems += sub;
+            htmlItems += `<tr>
+                <td>${it.nombre}</td>
+                <td>${it.precio.toLocaleString()}</td>
+                <td><input type="number" class="form-control form-control-sm" value="${it.cantidad}" onchange="items[${idx}].cantidad=this.value;renderTodo()"></td>
+                <td>${sub.toLocaleString()}</td>
+                <td><button type="button" class="btn btn-xs btn-danger" onclick="items.splice(${idx},1);renderTodo()">×</button></td>
+            </tr>`;
+        });
+        $('#tabla_detalle').html(htmlItems);
+        $('#total_venta').text(totalItems.toLocaleString() + ' Gs.');
+
+        // Render Pagos
+        let totalPagado = 0;
+        let htmlPagos = '';
+        pagos.forEach((p, idx) => {
+            totalPagado += p.monto;
+            htmlPagos += `<li class="list-group-item bg-dark border-secondary d-flex justify-content-between align-items-center">
+                <span>${p.metodo.toUpperCase()}: <strong>${p.monto.toLocaleString()}</strong></span>
+                <button type="button" class="btn btn-xs btn-danger" onclick="pagos.splice(${idx},1);renderTodo()">×</button>
+            </li>`;
+        });
+        $('#lista_pagos').html(htmlPagos);
+
+        // Validar Estado Final
+        let restante = totalItems - totalPagado;
+        $('#pago_restante').text(restante.toLocaleString() + ' Gs.');
+        $('#btn_finalizar').prop('disabled', totalItems === 0);
+
+        // Preparar JSONs para el Controller
+        $('#items_json').val(JSON.stringify(items));
+        $('#pagos_json').val(JSON.stringify(pagos));
+
+        console.log('Items:', items);
+        console.log('Pagos:', pagos);
+    }
+
+    function agregarPago() {
+        let monto = prompt("Monto a pagar:");
+        if (monto && !isNaN(monto) && monto > 0) {
+            pagos.push({
+                metodo: $('#metodo_pago').val(),
+                monto: parseFloat(monto)
+            });
+            renderTodo();
+        } else {
+            alert("Monto inválido");
+        }
+    }
+
+    function agregarItem(id, tipo, nombre, precio) {
+
+        let existente = items.find(i => i.id == id && i.tipo == tipo);
+
+        if (existente) {
+            existente.cantidad++;
+        } else {
+            items.push({
+                id: id,
+                tipo: tipo,
+                nombre: nombre,
+                precio: Number(precio) || 0,
+                cantidad: 1
+            });
+        }
+
+        renderTodo();
+    }
 
     $(document).ready(function() {
-        $('.select2').select2({ theme: 'bootstrap4' });
+        // Usamos delegación de eventos para que no falle
+        $(document).on('submit', '#formVenta', function(e) {
+            console.log("¡Intento de envío detectado!"); // Si no ves esto en consola, el ID está mal
 
-        // Al seleccionar del buscador
-        $('#buscador_general').on('select2:select', function (e) {
-            let data = e.params.data.element.dataset;
-            agregarItem(data.tipo, data.id, data.nombre, data.precio, data.iva);
-            $(this).val(null).trigger('change'); // Limpiar buscador
+            // Llenar los campos ocultos
+            $('#items_json').val(JSON.stringify(items));
+            $('#pagos_json').val(JSON.stringify(pagos));
+
+            if (items.length === 0) {
+                e.preventDefault();
+                alert('Debe agregar al menos un servicio o producto.');
+                return false;
+            }
+
+            // Si llegamos aquí, el formulario debería enviarse
+            console.log("Datos listos para enviar:", $('#items_json').val());
         });
     });
 
-    function agregarItem(tipo, id, nombre, precio, iva) {
-        let existe = items.find(i => i.id === id && i.tipo === tipo);
-        
-        if (existe) {
-            existe.cantidad++;
-        } else {
-            items.push({ tipo, id, nombre, precio, iva, cantidad: 1 });
-        }
-        renderizarTabla();
+    function abrirModalServicios() {
+        $('#modalServicios').modal('show');
     }
 
-    function renderizarTabla() {
-        let html = '';
-        let total = 0;
-
-        items.forEach((item, index) => {
-            let subtotal = item.precio * item.cantidad;
-            total += subtotal;
-            html += `
-                <tr>
-                    <td><small>${item.nombre}</small></td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm bg-dark text-white border-0" 
-                               value="${item.cantidad}" onchange="actualizarCant(${index}, this.value)">
-                    </td>
-                    <td>${subtotal.toLocaleString('es-PY')}</td>
-                    <td><button class="btn btn-xs btn-danger" onclick="eliminarItem(${index})">×</button></td>
-                </tr>
-            `;
-        });
-
-        $('#detalle_venta').html(html);
-        $('#txt_total').text(total.toLocaleString('es-PY') + ' Gs.');
-    }
-
-    function eliminarItem(index) {
-        items.splice(index, 1);
-        renderizarTabla();
-    }
-
-    function actualizarCant(index, valor) {
-        if(valor < 1) return;
-        items[index].cantidad = valor;
-        renderizarTabla();
+    function abrirModalProductos() {
+        $('#modalProductos').modal('show');
     }
 </script>
 @endpush

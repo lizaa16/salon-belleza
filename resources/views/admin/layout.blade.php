@@ -9,6 +9,7 @@
         /* Si no hay color en la DB, usa Rosa por defecto */
         --primary-color: {{ $globalSettings['primary_color'] ?? '#FF85A1' }};
         --sidebar-color: {{ $globalSettings['sidebar_color'] ?? '#1a1a1a' }};
+        --header-color: {{ $globalSettings['header_color'] ?? '#dfdfdf' }};
     }
 
     /* Cambiar el color del Sidebar (Barra lateral) */
