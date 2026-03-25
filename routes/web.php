@@ -9,6 +9,9 @@ use App\Http\Controllers\Admin\EmpleadoController;
 use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\ProductoController;
+use App\Http\Controllers\Admin\CajaController;
+use App\Http\Controllers\Admin\VentaController;
 
 
 Route::get('/', function () {
@@ -52,6 +55,23 @@ Route::middleware('auth')->group(function () {
         ->name('settings.index');
         Route::post('configuracion', [SettingController::class, 'update'])
         ->name('settings.update');
+
+        Route::resource('productos', ProductoController::class)
+        ->names('productos');
+
+
+        // Rutas para la caja
+        Route::get('caja', [CajaController::class, 'index'])
+            ->name('cajas.index');
+            Route::post('caja/abrir', [CajaController::class, 'abrir'])
+                ->name('cajas.abrir');
+            Route::post('cajas/movimiento', [CajaController::class, 'registrarMovimiento'])
+                ->name('cajas.movimiento');
+
+        // Rutas para las ventas 
+        Route::get('ventas/create', [VentaController::class, 'create'])
+            ->name('ventas.create');
+        
     });
 
 });

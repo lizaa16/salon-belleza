@@ -436,6 +436,11 @@ return [
                     'text' => 'Servicios',
                     'url'  => 'admin/servicios',
                     'icon' => 'fas fa-list',
+                ],
+                [
+                    'text' => 'Productos',
+                    'url'  => 'admin/productos',
+                    'icon' => 'fas fa-box',
                 ]
             ],
         ],
@@ -454,6 +459,22 @@ return [
             'text' => 'Configuración Visual',
             'url'  => 'admin/configuracion',
             'icon' => 'fas fa-fw fa-paint-brush',
+        ],
+        [
+            'header' => 'CAJA',
+        ],
+        [
+            'text' => 'Apertura de Caja',
+            'url'  => 'admin/caja',
+            'icon' => 'fas fa-fw fa-door-open',
+        ],
+        [
+            'header' => 'VENTAS',
+        ],
+        [
+            'text' => 'Punto de Venta',
+            'url'  => 'admin/ventas',
+            'icon' => 'fas fa-fw fa-door-open',
         ],
     ],
 
