@@ -45,7 +45,7 @@
                                     
                                 </div>
                                 <select name="cliente_id" id="cliente_id" class="form-control select2" style="width: 100%;">
-                                    <option value="" disabled selected>-- Seleccione --</option>
+                                    <option value="" disabled selected>-- Seleccione un cliente--</option>
                                     @foreach($clientes as $c)
                                         <option value="{{ $c->id }}">{{ $c->persona->nombre }} {{ $c->persona->apellido }}</option>
                                     @endforeach
@@ -56,6 +56,12 @@
                                 <button type="button" class="btn btn-primary btn-lg mt-4 px-5" onclick="irAPaso(2)">
                                     Siguiente <i class="fas fa-arrow-right ml-2"></i>
                                 </button>
+                                <div class="mt-3">
+                                    <label>Seleccionar Cita (opcional)</label>
+                                    <select id="cita_id" class="form-control">
+                                        <option value="">-- Sin cita --</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -121,40 +127,40 @@
                                 </div>
                             </div>
                             <div class="col-md-5">
-                                <h5>Registrar Pago</h5>
-                                <div class="input-group mb-3">
-                                    <select id="metodo_pago" class="form-control">
-                                        <option value="" disabled selected>Seleccionar Método de Pago</option>
-                                        <option value="efectivo">Efectivo</option>
-                                        <option value="tarjeta">Tarjeta (POS)</option>
-                                        <option value="transferencia">Transferencia</option>
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-success" onclick="agregarPago()">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
+                                <h5>Pagos Registrados</h5>
+                                <button type="button" class="btn btn-outline-success btn-block mb-3" onclick="agregarPago()">
+                                    <i class="fas fa-plus"></i> Agregar Pago
+                                </button>
+
                                 <ul id="lista_pagos" class="list-group mb-3"></ul>
+
                                 <div id="box_restante" class="alert alert-warning text-center">
                                     Resta pagar: <strong id="pago_restante">0 Gs.</strong>
                                 </div>
+
                                 <button type="button" id="btnGuardarVenta" class="btn btn-block btn-success btn-lg shadow" disabled onclick="confirmarVenta()">
-                                    <i class="fas fa-save mr-2"></i> FINALIZAR Y GUARDAR
+                                    <i class="fas fa-save mr-2"></i> Finalizar Venta
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </form>
+            <hr>
+            <div class="mt-4">
+                <a href="{{ route('admin.ventas.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left mr-2"></i> Volver al Listado</a>
+            </div>
         </div>
+    
     </div>
 </div>
 
 <div class="modal fade" id="modalServicios">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-info"><h5 class="modal-title">Servicios</h5></div>
+            <div class="modal-header bg-info">
+                <h5 class="modal-title">Servicios</h5>
+            </div>
             <div class="modal-body p-0">
                 @foreach($servicios as $s)
                 <button type="button" class="btn btn-light btn-block text-left m-0 border-bottom rounded-0" 
@@ -182,12 +188,98 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para registrar pagos -->
+<div class="modal fade" id="modalPagos">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 2px solid var(--primary-color);">
+                <h5 class="modal-title">REGISTRAR PAGO</h5>
+            </div>
+            <div class="modal-body">
+                <form id="formPago">
+                    <div class="form-group">
+                        <label for="metodo_pago">Método de Pago</label>
+                        <select class="form-control" id="metodo_pago" required>
+                            <option value="">Seleccione un método</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="tarjeta">Tarjeta de Crédito/Débito</option>
+                            <option value="transferencia">Transferencia Bancaria</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="monto_pago">Monto a Pagar</label>
+                        <input type="number" class="form-control" id="monto_pago" min="0" step="100" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarPago()">Guardar Pago</button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 @push('js')
 <script>
     let items = [];
     let pagos = [];
+
+    $('#cliente_id').change(function() {
+        let clienteId = $(this).val();
+
+        if (!clienteId) return;
+
+        $.get(`/admin/citas/pendientes/${clienteId}`, function(data) {
+            let options = '<option value="">-- Sin cita --</option>';
+
+            data.forEach(c => {
+                options += `<option value="${c.id}">
+                    Cita #${c.id} - ${c.fecha_hora}
+                </option>`;
+            });
+
+            $('#cita_id').html(options);
+        });
+    });
+
+    $('#cita_id').change(function() {
+        let citaId = $(this).val();
+
+        if (!citaId) return;
+
+        $.get(`/admin/citas/${citaId}`, function(cita) {
+
+            // 🔹 Limpiar carrito
+            items = [];
+
+            // 🔹 Cargar servicios de la cita
+            cita.detalles.forEach(d => {
+                items.push({
+                    id: d.servicio_id,
+                    tipo: 'serv',
+                    nombre: d.servicio.nombre,
+                    precio: d.precio_unitario,
+                    cantidad: d.cantidad
+                });
+            });
+
+            // 🔹 Aplicar seña como pago automático
+            if (cita.seña_monto && cita.seña_monto > 0) {
+                pagos = [{
+                    metodo: cita.seña_metodo_pago,
+                    monto: parseFloat(cita.seña_monto),
+                    es_sena: true
+                }];
+            } else {
+                pagos = [];
+            }
+
+            renderTodo();
+        });
+    });
 
     // FUNCIÓN DE NAVEGACIÓN CORREGIDA
     function irAPaso(paso) {
@@ -224,46 +316,59 @@
         }
 
     function renderTodo() {
-        let htmlItems = '';
-        let total = 0;
+    let htmlItems = '';
+    let total = 0;
+    
+    // Cálculo del Total de la Venta
+    items.forEach((it, idx) => {
+        let sub = it.precio * it.cantidad;
+        total += sub;
+        htmlItems += `<tr>
+            <td>${it.nombre}</td>
+            <td>${it.precio.toLocaleString()} Gs.</td>
+            <td><input type="number" class="form-control form-control-sm" value="${it.cantidad}" min="1" onchange="actualizarCantidad(${idx}, this.value)"></td>
+            <td class="text-right">${sub.toLocaleString()} Gs.</td>
+            <td><button type="button" class="btn btn-xs btn-danger" onclick="eliminarItem(${idx})">×</button></td>
+        </tr>`;
+    });
+    
+    $('#tabla_detalle').html(htmlItems);
+    $('#total_venta_display, #resumen_total').text(total.toLocaleString() + ' Gs.');
+
+    // Render Pagos y Cálculo de Total Pagado
+    let totalPagado = pagos.reduce((sum, p) => sum + p.monto, 0);
+    let htmlPagos = '';
+    pagos.forEach((p, idx) => {
+        htmlPagos += `<li class="list-group-item d-flex justify-content-between p-2">
+            <span><b>${p.metodo.toUpperCase()}</b></span>
+            <span>${p.monto.toLocaleString()} Gs. <button type="button" class="btn btn-xs text-danger ml-2" onclick="eliminarPago(${idx})">×</button></span>
+        </li>`;
+    });
+    $('#lista_pagos').html(htmlPagos);
+
+    // --- LÓGICA DE VUELTO ---
+    let diferencia = totalPagado - total; // Si es positivo, es vuelto. Si es negativo, falta.
+
+    if (total > 0 && diferencia >= 0) {
+        // PAGO COMPLETO O CON VUELTO
+        let vuelto = diferencia;
+        $('#box_restante')
+            .removeClass('alert-warning')
+            .addClass('alert-success')
+            .html(`<strong>¡Pago completo!</strong> ${vuelto > 0 ? '<br>Vuelto: <b>' + vuelto.toLocaleString() + ' Gs.</b>' : ''}`);
         
-        items.forEach((it, idx) => {
-            let sub = it.precio * it.cantidad;
-            total += sub;
-            htmlItems += `<tr>
-                <td>${it.nombre}</td>
-                <td>${it.precio.toLocaleString()} Gs.</td>
-                <td><input type="number" class="form-control form-control-sm" value="${it.cantidad}" min="1" onchange="actualizarCantidad(${idx}, this.value)"></td>
-                <td class="text-right">${sub.toLocaleString()} Gs.</td>
-                <td><button type="button" class="btn btn-xs btn-danger" onclick="eliminarItem(${idx})">×</button></td>
-            </tr>`;
-        });
-        
-        $('#tabla_detalle').html(htmlItems);
-        $('#total_venta_display, #resumen_total').text(total.toLocaleString() + ' Gs.');
-
-        // Render Pagos
-        let totalPagado = pagos.reduce((sum, p) => sum + p.monto, 0);
-        let htmlPagos = '';
-        pagos.forEach((p, idx) => {
-            htmlPagos += `<li class="list-group-item d-flex justify-content-between p-2">
-                <span><b>${p.metodo.toUpperCase()}</b></span>
-                <span>${p.monto.toLocaleString()} Gs. <button type="button" class="btn btn-xs text-danger ml-2" onclick="eliminarPago(${idx})">×</button></span>
-            </li>`;
-        });
-        $('#lista_pagos').html(htmlPagos);
-
-        // Lógica de saldo y botón guardar
-        let restante = total - totalPagado;
-        if (restante < 0) restante = 0;
-        $('#pago_restante').text(restante.toLocaleString() + ' Gs.');
-
-        if (total > 0 && restante <= 0) {
-            $('#box_restante').removeClass('alert-warning').addClass('alert-success').text('¡Pago completo!');
-            $('#btnGuardarVenta').prop('disabled', false);
-        } else {
-            $('#box_restante').addClass('alert-warning').removeClass('alert-success').html(`Falta: <strong>${restante.toLocaleString()} Gs.</strong>`);
+        $('#btnGuardarVenta').prop('disabled', false);
+        $('#pago_restante').text('0 Gs.');
+    } else {
+        // FALTA PAGAR
+        let faltante = Math.abs(diferencia);
+        $('#box_restante')
+                .addClass('alert-warning')
+                .removeClass('alert-success')
+                .html(`Falta: <strong>${faltante.toLocaleString()} Gs.</strong>`);
+            
             $('#btnGuardarVenta').prop('disabled', true);
+            $('#pago_restante').text(faltante.toLocaleString() + ' Gs.');
         }
     }
 
@@ -311,13 +416,46 @@
         let totalVenta = items.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
         let totalPagado = pagos.reduce((sum, p) => sum + p.monto, 0);
         let faltante = totalVenta - totalPagado;
-        if (faltante <= 0) return;
 
-        let monto = prompt("Ingrese el monto a recibir:", faltante);
-        if (monto !== null && monto > 0) {
-            pagos.push({ metodo: $('#metodo_pago').val(), monto: parseFloat(monto) });
-            renderTodo();
+        if (faltante <= 0) {
+            Swal.fire('Venta Cubierta', 'Ya se ha alcanzado el total de la venta.', 'info');
+            return;
         }
+
+        // Ponemos el monto que falta por defecto en el input del modal
+        $('#monto_pago').val(faltante);
+        
+        // Abrimos el modal
+        $('#modalPagos').modal('show');
+    }
+
+    function guardarPago() {
+        let metodo = $('#metodo_pago').val(); // Captura del select del modal
+        let monto = parseFloat($('#monto_pago').val()); // Captura del input del modal
+
+        if (!metodo) {
+            Swal.fire('Error', 'Debe seleccionar un método de pago', 'error');
+            return;
+        }
+
+        if (isNaN(monto) || monto <= 0) {
+            Swal.fire('Error', 'Ingrese un monto válido', 'error');
+            return;
+        }
+
+        // Agregamos al array global de pagos
+        pagos.push({ 
+            metodo: metodo, 
+            monto: monto 
+        });
+
+        // Cerramos el modal y limpiamos los campos para la próxima vez
+        $('#modalPagos').modal('hide');
+        $('#metodo_pago').val('');
+        $('#monto_pago').val('');
+
+        // LLAMAMOS A TU FUNCIÓN PARA REFRESCAR LA PANTALLA
+        renderTodo();
     }
 
     function eliminarPago(idx) {
@@ -326,16 +464,39 @@
     }
 
     function confirmarVenta() {
-        if (confirm("¿Confirmar y guardar esta venta?")) {
-            $('#items_json').val(JSON.stringify(items));
-            $('#pagos_json').val(JSON.stringify(pagos));
-            $('#formVenta').submit();
+        if (items.length === 0) {
+            Swal.fire('Error', 'El carrito está vacío', 'warning');
+            return;
         }
-    }
 
-    $(document).ready(function() {
-        $('.select2').select2();
-        renderTodo();
-    });
+        // 1. Asignamos valores
+        $('#items_json').val(JSON.stringify(items));
+        $('#pagos_json').val(JSON.stringify(pagos));
+
+        // 2. Ejecutamos la alerta
+        Swal.fire({
+            title: '¿Confirmar Venta?',
+            text: "Esta acción guardará la venta en el sistema",
+            icon: 'question', // Ponemos ambos por compatibilidad
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, guardar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Guardando venta...',
+                    text: 'Por favor, espere un momento',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+            });
+
+            document.getElementById('formVenta').submit();
+}
+        });
+    }
 </script>
 @endpush

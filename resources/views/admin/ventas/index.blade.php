@@ -45,7 +45,9 @@
                             @endif
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-light"><i class="fas fa-eye"></i></button>
+                            <a href="{{ route('admin.ventas.show', $v->id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </td>
                     </tr>
                     @empty

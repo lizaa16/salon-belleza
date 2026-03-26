@@ -33,4 +33,16 @@ class Venta extends Model
     {
         return $this->hasOne(Factura::class);
     }
+
+    public function cobros()
+    {
+        return $this->hasMany(VentaCobro::class);
+    }
+
+    public function article()
+    {
+        // Esto buscará automáticamente 'item_type' e 'item_id'
+        // 'serv' debería apuntar al modelo Servicio y 'prod' al de Producto
+        return $this->morphTo('item', 'item_type', 'item_id');
+    }
 }

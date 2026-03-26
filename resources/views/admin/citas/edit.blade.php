@@ -28,7 +28,7 @@
                 <div class="col-md-6 form-group">
                     <label>Cliente</label>
                     <select name="cliente_id" class="form-control @error('cliente_id') is-invalid @enderror">
-                        <option value="">-- Seleccioná un cliente --</option>
+                        <option value="">-- Seleccione un cliente --</option>
                         @foreach($clientes as $cliente)
                             <option value="{{ $cliente->id }}"
                                 {{ old('cliente_id', $cita->cliente_id) == $cliente->id ? 'selected' : '' }}>
@@ -43,7 +43,7 @@
                 <div class="col-md-6 form-group">
                     <label>Empleado</label>
                     <select name="empleado_id" class="form-control @error('empleado_id') is-invalid @enderror">
-                        <option value="">-- Seleccioná un empleado --</option>
+                        <option value="">-- Seleccione un empleado --</option>
                         @foreach($empleados as $empleado)
                             <option value="{{ $empleado->id }}"
                                 {{ old('empleado_id', $cita->empleado_id) == $empleado->id ? 'selected' : '' }}>
@@ -125,7 +125,7 @@
                 <div class="col-md-4 form-group">
                     <label>Método de pago de seña</label>
                     <select name="seña_metodo_pago" class="form-control">
-                        <option value="">-- Seleccioná --</option>
+                        <option value="">-- Seleccione --</option>
                         <option value="efectivo"      {{ old('seña_metodo_pago', $cita->seña_metodo_pago) == 'efectivo'      ? 'selected' : '' }}>Efectivo</option>
                         <option value="tarjeta"       {{ old('seña_metodo_pago', $cita->seña_metodo_pago) == 'tarjeta'       ? 'selected' : '' }}>Tarjeta</option>
                         <option value="transferencia" {{ old('seña_metodo_pago', $cita->seña_metodo_pago) == 'transferencia' ? 'selected' : '' }}>Transferencia</option>

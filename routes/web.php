@@ -27,18 +27,24 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::prefix('admin')->name('admin.')->group(function() {
+        
+        // Rutas para categorias
         Route::resource('categorias', CategoriaServicioController::class)
         ->names('categorias');
 
+        // Rutas para servicios
         Route::resource('servicios', ServicioController::class)
         ->names('servicios');
 
+        // Rutas para personas
         Route::resource('personas', PersonaController::class)
         ->names('personas');
 
+        // Rutas para clientes
         Route::resource('clientes', ClienteController::class)
         ->names('clientes');
 
+        // Rutas para la Empleados
         Route::resource('empleados', EmpleadoController::class)
         ->names('empleados');
             Route::get('empleados/{empleado}/password', [EmpleadoController::class, 'editPassword'])
@@ -46,11 +52,15 @@ Route::middleware('auth')->group(function () {
             Route::put('empleados/{empleado}/password', [EmpleadoController::class, 'updatePassword'])
             ->name('empleados.password.update');
 
+        // Rutas para la Agenda de Citas
+        Route::get('citas/pendientes/{cliente_id}', [CitaController::class, 'pendientes'])
+            ->name('citas.pendientes'); // <--- AGREGA ESTA LÍNEA
         Route::resource('citas', CitaController::class)
             ->names('citas');
         Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
             ->name('citas.cancelar');
 
+        // Rutas para la configuyracion visual
         Route::get('configuracion', [SettingController::class, 'index'])
         ->name('settings.index');
         Route::post('configuracion', [SettingController::class, 'update'])
@@ -58,7 +68,6 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('productos', ProductoController::class)
         ->names('productos');
-
 
         // Rutas para la caja
         Route::get('caja', [CajaController::class, 'index'])
@@ -71,6 +80,11 @@ Route::middleware('auth')->group(function () {
         // Rutas para ventas
         Route::resource('ventas', VentaController::class)
             ->names('ventas');
+        Route::get('/ventas/{id}', [VentaController::class, 'show'])
+            ->name('ventas.show');
+
+        // Rutas para ventas-citas
+        Route::get('/citas/{id}', [CitaController::class, 'show']);
         
     });
 

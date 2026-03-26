@@ -26,23 +26,19 @@
             <div class="row">
                 <div class="col-md-6 form-group">
                     <label>Cliente</label>
-                    <select name="cliente_id" class="form-control @error('cliente_id') is-invalid @enderror">
-                        <option value="">-- Seleccioná un cliente --</option>
+                    <select name="cliente_id" class="form-control select2 @error('cliente_id') is-invalid @enderror">
+                        <option value="" selected disabled>-- Seleccione un cliente --</option>
                         @foreach($clientes as $cliente)
-                            <option value="{{ $cliente->id }}"
-                                {{ old('cliente_id') == $cliente->id ? 'selected' : '' }}>
+                            <option value="{{ $cliente->id }}" {{ old('cliente_id') == $cliente->id ? 'selected' : '' }}>
                                 {{ $cliente->persona->nombre }} {{ $cliente->persona->apellido }}
                             </option>
                         @endforeach
                     </select>
-                    @error('cliente_id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
                 <div class="col-md-6 form-group">
                     <label>Empleado</label>
-                    <select name="empleado_id" class="form-control @error('empleado_id') is-invalid @enderror">
-                        <option value="">-- Seleccioná un empleado --</option>
+                    <select name="empleado_id" class="form-control select2 @error('empleado_id') is-invalid @enderror">
+                        <option value="" selected disabled>-- Seleccione un empleado --</option>
                         @foreach($empleados as $empleado)
                             <option value="{{ $empleado->id }}"
                                 {{ old('empleado_id') == $empleado->id ? 'selected' : '' }}>
@@ -72,8 +68,8 @@
             {{-- Selector de servicios --}}
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <select id="selectServicio" class="form-control">
-                        <option value="">-- Agregar servicio --</option>
+                    <select id="selectServicio" class="form-control select2">
+                        <option value="" selected disabled>-- Agregar servicio --</option>
                         @foreach($servicios as $servicio)
                             <option value="{{ $servicio->id }}"
                                     data-precio="{{ $servicio->precio }}"
@@ -82,6 +78,9 @@
                             </option>
                         @endforeach
                     </select>
+                    @error('fecha_hora')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
                 <div class="col-md-2">
                     <button type="button" class="btn btn-success" onclick="agregarServicio()">
@@ -120,6 +119,12 @@
             {{-- Campo oculto con los detalles en JSON --}}
             <input type="hidden" name="detalles" id="inputDetalles">
 
+            {{-- Justo debajo de la tabla de servicios o arriba del botón guardar --}}
+            @error('detalles')
+                <div class="alert alert-danger mt-2">
+                    <i class="fas fa-exclamation-triangle"></i> Debe agregar al menos un servicio a la cita.
+                </div>
+            @enderror
             <hr>
             <h5>Seña / Adelanto <small class="text-muted">(opcional)</small></h5>
 
@@ -137,7 +142,7 @@
                     <label>Método de pago de seña</label>
                     <select name="seña_metodo_pago"
                             class="form-control @error('seña_metodo_pago') is-invalid @enderror">
-                        <option value="">-- Seleccioná --</option>
+                        <option value="">-- Seleccione --</option>
                         <option value="efectivo"     {{ old('seña_metodo_pago') == 'efectivo'     ? 'selected' : '' }}>Efectivo</option>
                         <option value="tarjeta"      {{ old('seña_metodo_pago') == 'tarjeta'      ? 'selected' : '' }}>Tarjeta</option>
                         <option value="transferencia"{{ old('seña_metodo_pago') == 'transferencia'? 'selected' : '' }}>Transferencia</option>
@@ -160,7 +165,7 @@
 </div>
 @stop
 
-@section('js')
+@push('js')
 <script>
 let detalles = [];
 
@@ -183,6 +188,7 @@ function agregarServicio() {
     detalles.push({ servicio_id: servicioId, nombre, precio_unitario: precio, cantidad: 1 });
     renderizarTabla();
     select.value = '';
+    $('#selectServicio').val('').trigger('change');
 }
 
 function renderizarTabla() {
@@ -245,4 +251,4 @@ function eliminarDetalle(index) {
     renderizarTabla();
 }
 </script>
-@stop
+@endpush

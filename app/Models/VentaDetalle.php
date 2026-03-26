@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class VentaDetalle extends Model
 {
@@ -19,15 +20,12 @@ class VentaDetalle extends Model
         return $this->belongsTo(Venta::class);
     }
 
-    // Relación con el producto (si es un producto)
-    public function producto()
+    /**
+     * Relación polimórfica dinámica
+     */
+    public function item(): MorphTo
     {
-        return $this->belongsTo(Producto::class);
-    }
-
-    // Relación con el servicio (si es un servicio)
-    public function servicio()
-    {
-        return $this->belongsTo(Servicio::class);
+        // Laravel ahora ya sabe que 'serv' es Servicio gracias al Provider
+        return $this->morphTo(__FUNCTION__, 'item_type', 'item_id');
     }
 }

@@ -41,14 +41,6 @@ class VentaController extends Controller
 
         return view('admin.ventas.create', compact('clientes', 'productos', 'servicios'));    }
 
-    public function getCitasPendientes($cliente_id)
-    {
-        $citas = Cita::where('cliente_id', $cliente_id)
-                                ->where('estado', 'confirmada')
-                                ->get();
-        return response()->json($citas);
-    }
-
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -61,46 +53,68 @@ class VentaController extends Controller
                 return back()->with('error', 'Debe agregar al menos un item.');
             }
 
-            // 🟢 1. Crear venta (Sin el campo fecha, usa created_at por defecto)
+            // 🔵 CAJA OBLIGATORIA
+            $caja = Caja::where('user_id', auth()->id())
+                        ->where('estado', 'abierta')
+                        ->first();
+
+            if (!$caja) {
+                throw new \Exception("No hay caja abierta.");
+            }
+
+            // 🟢 1. CREAR VENTA
             $venta = Venta::create([
                 'cliente_id'  => $request->cliente_id,
                 'empleado_id' => auth()->id(),
                 'estado'      => 'PENDIENTE_PAGO',
-                'total'       => 0, // Se actualiza al final
-                'total_pagar' => 0, // Se actualiza al final
-                'monto_final_cobrado' => 0, // Se actualiza al final
-                'total_bruto'       => 0, // Se actualizará al final
+                'total'       => 0,
+                'total_pagar' => 0,
+                'monto_final_cobrado' => 0,
+                'total_bruto' => 0,
             ]);
 
             $totalVenta = 0;
 
-            // 🟡 2. Guardar detalle (Usando venta_detalles)
+            // 🟡 2. DETALLE + STOCK
             foreach ($items as $item) {
                 $subtotal = $item['precio'] * $item['cantidad'];
 
                 VentaDetalle::create([
                     'venta_id'        => $venta->id,
                     'item_id'         => $item['id'],
-                    'item_type'       => $item['tipo'], // 'serv' o 'prod'
+                    'item_type'       => $item['tipo'],
                     'cantidad'        => $item['cantidad'],
                     'precio_unitario' => $item['precio'],
                     'subtotal'        => $subtotal,
-                    'tasa_iva'        => 0, // O el valor que manejes
+                    'tasa_iva'        => 0,
                     'monto_iva'       => 0
                 ]);
+
+                // 🔥 DESCONTAR STOCK SOLO SI ES PRODUCTO
+                if ($item['tipo'] === 'prod') {
+                    $producto = Producto::find($item['id']);
+
+                    if (!$producto) {
+                        throw new \Exception("Producto no encontrado.");
+                    }
+
+                    if ($producto->stock_actual < $item['cantidad']) {
+                        throw new \Exception("Stock insuficiente para {$producto->nombre}");
+                    }
+
+                    $producto->stock_actual -= $item['cantidad'];
+                    $producto->save();
+                }
 
                 $totalVenta += $subtotal;
             }
 
-            // 🔵 3. Obtener caja abierta
-            $caja = Caja::where('user_id', auth()->id())
-                        ->where('estado', 'abierta')
-                        ->first();
-
-            // 🟣 4. Guardar pagos y movimientos
+            // 🟣 3. PAGOS + CAJA
             $totalPagado = 0;
+
             if ($pagos) {
                 foreach ($pagos as $pago) {
+
                     $cobro = VentaCobro::create([
                         'venta_id'    => $venta->id,
                         'metodo_pago' => $pago['metodo'],
@@ -110,7 +124,8 @@ class VentaController extends Controller
 
                     $totalPagado += $pago['monto'];
 
-                    if ($caja) {
+                    // 🚨 NO REGISTRAR SEÑA EN CAJA
+                    if ($pago['metodo'] !== 'seña') {
                         CajaMovimiento::create([
                             'caja_id'         => $caja->id,
                             'tipo'            => 'ingreso',
@@ -124,9 +139,16 @@ class VentaController extends Controller
                 }
             }
 
-            // 🔴 5. Actualizar totales y estado en la venta
-            $estado = ($totalPagado >= $totalVenta) ? 'PAGADO' : ($totalPagado > 0 ? 'PAGO_PARCIAL' : 'PENDIENTE_PAGO');
+            // 🔴 4. ESTADO
+            if ($totalPagado == 0) {
+                $estado = 'PENDIENTE_PAGO';
+            } elseif ($totalPagado < $totalVenta) {
+                $estado = 'PAGO_PARCIAL';
+            } else {
+                $estado = 'PAGADO';
+            }
 
+            // 🟠 5. UPDATE FINAL
             $venta->update([
                 'total'               => $totalVenta,
                 'total_pagar'         => $totalVenta,
@@ -135,17 +157,26 @@ class VentaController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('admin.ventas.index')->with('success', 'Venta registrada con éxito.');
+
+            return redirect()
+                ->route('admin.ventas.index')
+                ->with('success', 'Venta registrada con éxito.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // Esto matará el proceso y te mostrará una pantalla naranja/negra con el error exacto
+
             dd([
-                'Error_Mensaje' => $e->getMessage(),
-                'Archivo' => $e->getFile(),
-                'Linea' => $e->getLine(),
-                'Datos_Recibidos' => $request->all()
+                'Error' => $e->getMessage(),
+                'Linea' => $e->getLine()
             ]);
         }
+    }
+
+    public function show($id)
+    {
+        // Cargamos 'detalles.item' para que traiga el Producto o Servicio automáticamente
+        $venta = Venta::with(['cliente.persona', 'detalles.item', 'cobros'])->findOrFail($id);
+
+        return view('admin.ventas.show', compact('venta'));
     }
 }

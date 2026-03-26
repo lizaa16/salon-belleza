@@ -119,7 +119,7 @@
     {{-- Modal de Movimiento Rápido --}}
     <div class="modal fade" id="modalMovimiento" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
-            <div class="modal-content" style="background-color: var(--sidebar-color); color: white;">
+            <div class="modal-content">
                 <div class="modal-header" style="border-bottom: 1px solid var(--primary-color);">
                     <h5 class="modal-title"><i class="fas fa-exchange-alt"></i> Nuevo Movimiento de Caja</h5>
                     <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
@@ -129,7 +129,7 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label>Tipo de Movimiento</label>
-                            <select name="tipo" class="form-control border-0" style="background-color: #2a2a2a; color: white;" required>
+                            <select name="tipo" class="form-control border-1"  required>
                                 <option value="egreso" class="text-danger">SALIDA (Gasto, pago, etc.)</option>
                                 <option value="ingreso" class="text-success">ENTRADA (Aporte de sencillo, etc.)</option>
                             </select>
@@ -137,14 +137,14 @@
 
                         <div class="form-group">
                             <label>Monto (Gs.)</label>
-                            <input type="number" name="monto" class="form-control form-control-lg border-0" 
-                                style="background-color: #2a2a2a; color: white;" placeholder="Ej: 50000" required>
+                            <input type="number" name="monto" class="form-control form-control-lg border-1" 
+                                 placeholder="Ej: 50000" required>
                         </div>
 
                         <div class="form-group">
                             <label>Concepto / Motivo</label>
-                            <input type="text" name="concepto" class="form-control border-0" 
-                                style="background-color: #2a2a2a; color: white;" 
+                            <input type="text" name="concepto" class="form-control border-1" 
+                                 
                                 placeholder="Ej: Cambio por sencillo de 10.000" required>
                         </div>
                     </div>

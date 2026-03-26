@@ -10,6 +10,8 @@ use App\Models\Empleado;
 use App\Models\Servicio;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Caja;
+use App\Models\CajaMovimiento;
 
 class CitaController extends Controller
 {
@@ -84,6 +86,26 @@ class CitaController extends Controller
                     'precio_unitario' => $detalle['precio_unitario'],
                     'subtotal'        => $detalle['cantidad'] * $detalle['precio_unitario'],
                 ]);
+            }
+
+            // 🔵 3. Registrar seña en caja (SI EXISTE)
+            if ($request->seña_monto && $request->seña_monto > 0) {
+
+                $caja = Caja::where('user_id', auth()->id())
+                            ->where('estado', 'abierta')
+                            ->first();
+
+                if ($caja) {
+                    CajaMovimiento::create([
+                        'caja_id'         => $caja->id,
+                        'tipo'            => 'ingreso',
+                        'monto'           => $request->seña_monto,
+                        'metodo_pago'     => $request->seña_metodo_pago,
+                        'concepto'        => 'Seña Cita #' . $cita->id,
+                        'referencia_id'   => $cita->id,
+                        'referencia_type' => 'App\Models\Cita'
+                    ]);
+                }
             }
         });
 
@@ -161,5 +183,25 @@ class CitaController extends Controller
         return redirect()->route('admin.citas.index')
             ->with('success', 'Cita cancelada correctamente.');
     }
+
+    public function show($id)
+    {
+        $cita = Cita::with('detalles.servicio')->findOrFail($id);
+        return response()->json($cita);
+    }
+
+    // Dentro de CitaController.php
+
+    public function pendientes($cliente_id)
+    {
+        // Buscamos citas del cliente que estén en estado 'pendiente'
+        // Cargamos también los detalles y el servicio para que el JS tenga la info
+        $citas = Cita::with('detalles.servicio')
+            ->where('cliente_id', $cliente_id)
+            ->where('estado', 'pendiente')
+            ->get();
+
+        return response()->json($citas);
+}
 
 }
