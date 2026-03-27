@@ -119,6 +119,10 @@
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </form>
+
+                                    <a href="{{ route('admin.ventas.create', ['cita_id' => $cita->id]) }}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-fw fa-shopping-cart"></i>
+                                    </a>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif

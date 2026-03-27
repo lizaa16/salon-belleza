@@ -25,22 +25,31 @@ class VentaController extends Controller
         return view('admin.ventas.index', compact('ventas'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        // Verificamos caja abierta (Regla de negocio)
-        $caja = Caja::where('user_id', auth()->id())->where('estado', 'abierta')->first();
+        $caja = Caja::where('user_id', auth()->id())
+            ->where('estado', 'abierta')
+            ->first();
 
         if (!$caja) {
             return redirect()->route('admin.cajas.index')
-                            ->with('error', 'Debes abrir la caja antes de vender.');
+                ->with('error', 'Debes abrir la caja antes de vender.');
         }
 
-        $clientes = Cliente::with('persona')->get(); 
+        $clientes  = Cliente::with('persona')->get(); 
         $productos = Producto::where('stock_actual', '>', 0)->get();
         $servicios = Servicio::all();
 
-        return view('admin.ventas.create', compact('clientes', 'productos', 'servicios'));    }
+        $cita = null;
 
+        if ($request->cita_id) {
+            $cita = Cita::with('detalles.servicio')->find($request->cita_id);
+        }
+
+        return view('admin.ventas.create', compact(
+            'clientes', 'productos', 'servicios', 'cita'
+        ));
+    }
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -53,7 +62,7 @@ class VentaController extends Controller
                 return back()->with('error', 'Debe agregar al menos un item.');
             }
 
-            // 🔵 CAJA OBLIGATORIA
+            // 🔵 CAJA
             $caja = Caja::where('user_id', auth()->id())
                         ->where('estado', 'abierta')
                         ->first();
@@ -62,7 +71,16 @@ class VentaController extends Controller
                 throw new \Exception("No hay caja abierta.");
             }
 
-            // 🟢 1. CREAR VENTA
+            // 🔴 VALIDAR CITA NO COBRADA
+            if ($request->cita_id) {
+                $existe = Venta::where('cita_id', $request->cita_id)->exists();
+
+                if ($existe) {
+                    throw new \Exception('Esta cita ya fue cobrada.');
+                }
+            }
+
+            // 🟢 CREAR VENTA
             $venta = Venta::create([
                 'cliente_id'  => $request->cliente_id,
                 'empleado_id' => auth()->id(),
@@ -71,11 +89,12 @@ class VentaController extends Controller
                 'total_pagar' => 0,
                 'monto_final_cobrado' => 0,
                 'total_bruto' => 0,
+                'cita_id'     => $request->cita_id 
             ]);
 
             $totalVenta = 0;
 
-            // 🟡 2. DETALLE + STOCK
+            // 🟡 DETALLES
             foreach ($items as $item) {
                 $subtotal = $item['precio'] * $item['cantidad'];
 
@@ -90,7 +109,6 @@ class VentaController extends Controller
                     'monto_iva'       => 0
                 ]);
 
-                // 🔥 DESCONTAR STOCK SOLO SI ES PRODUCTO
                 if ($item['tipo'] === 'prod') {
                     $producto = Producto::find($item['id']);
 
@@ -109,37 +127,45 @@ class VentaController extends Controller
                 $totalVenta += $subtotal;
             }
 
-            // 🟣 3. PAGOS + CAJA
+            // 🟣 PAGOS
             $totalPagado = 0;
+            $montoRestante = $totalVenta;
 
-            if ($pagos) {
-                foreach ($pagos as $pago) {
+            foreach ($pagos as $pago) {
 
-                    $cobro = VentaCobro::create([
-                        'venta_id'    => $venta->id,
-                        'metodo_pago' => $pago['metodo'],
-                        'monto'       => $pago['monto'],
-                        'referencia'  => 'Cobro Venta #' . $venta->id
+                $montoReal = min($pago['monto'], $montoRestante);
+
+                $esSena = isset($pago['es_sena']) && $pago['es_sena'];
+
+                $cobro = VentaCobro::create([
+                    'venta_id'    => $venta->id,
+                    'metodo_pago' => $pago['metodo'],
+                    'monto'       => $montoReal,
+                    'referencia'  => 'Venta #' . $venta->id
+                ]);
+
+                // 🚨 SOLO registrar en caja si:
+                // - NO es seña
+                // - Y es efectivo
+                if (!$esSena && $pago['metodo'] === 'efectivo') {
+                    CajaMovimiento::create([
+                        'caja_id'         => $caja->id,
+                        'tipo'            => 'ingreso',
+                        'monto'           => $montoReal,
+                        'metodo_pago'     => 'efectivo',
+                        'concepto'        => 'Venta #' . $venta->id,
+                        'referencia_id'   => $cobro->id,
+                        'referencia_type' => 'App\Models\VentaCobro'
                     ]);
-
-                    $totalPagado += $pago['monto'];
-
-                    // 🚨 NO REGISTRAR SEÑA EN CAJA
-                    if ($pago['metodo'] !== 'seña') {
-                        CajaMovimiento::create([
-                            'caja_id'         => $caja->id,
-                            'tipo'            => 'ingreso',
-                            'monto'           => $pago['monto'],
-                            'metodo_pago'     => $pago['metodo'],
-                            'concepto'        => 'Venta #' . $venta->id,
-                            'referencia_id'   => $cobro->id,
-                            'referencia_type' => 'App\Models\VentaCobro'
-                        ]);
-                    }
                 }
+
+                $totalPagado += $montoReal;
+                $montoRestante -= $montoReal;
+
+                if ($montoRestante <= 0) break;
             }
 
-            // 🔴 4. ESTADO
+            // 🔴 ESTADO
             if ($totalPagado == 0) {
                 $estado = 'PENDIENTE_PAGO';
             } elseif ($totalPagado < $totalVenta) {
@@ -148,13 +174,19 @@ class VentaController extends Controller
                 $estado = 'PAGADO';
             }
 
-            // 🟠 5. UPDATE FINAL
+            // 🟠 UPDATE FINAL
             $venta->update([
                 'total'               => $totalVenta,
                 'total_pagar'         => $totalVenta,
                 'monto_final_cobrado' => $totalPagado,
                 'estado'              => $estado
             ]);
+
+            // 🟢 FINALIZAR CITA SOLO SI PAGÓ TODO
+            if ($venta->cita_id && $estado === 'PAGADO') {
+                Cita::where('id', $venta->cita_id)
+                    ->update(['estado' => 'finalizada']);
+            }
 
             DB::commit();
 

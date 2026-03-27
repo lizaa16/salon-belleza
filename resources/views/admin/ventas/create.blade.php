@@ -34,6 +34,7 @@
                 @csrf
                 <input type="hidden" name="items_json" id="items_json">
                 <input type="hidden" name="pagos_json" id="pagos_json">
+                <input type="hidden" name="cita_id" id="cita_id_hidden">
 
                 <div class="tab-content">
                     
@@ -88,7 +89,7 @@
                         </table>
                         <div class="d-flex justify-content-between align-items-center mt-4 border-top pt-3">
                             <button type="button" class="btn btn-default" onclick="irAPaso(1)">Atrás</button>
-                            <h2 id="total_venta_display" class="text-primary font-weight-bold mb-0">0 Gs.</h2>
+                            <h2 id="total_venta_display" class="font-weight-bold mb-0">0 Gs.</h2>
                             <button type="button" class="btn btn-primary px-5" onclick="irAPaso(3)">
                                 Ir al Resumen <i class="fas fa-chevron-right ml-2"></i>
                             </button>
@@ -233,13 +234,26 @@
         if (!clienteId) return;
 
         $.get(`/admin/citas/pendientes/${clienteId}`, function(data) {
+
             let options = '<option value="">-- Sin cita --</option>';
 
-            data.forEach(c => {
-                options += `<option value="${c.id}">
-                    Cita #${c.id} - ${c.fecha_hora}
-                </option>`;
-            });
+            if (data.length > 0) {
+
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Cliente con cita',
+                    text: `Tiene ${data.length} cita(s) pendiente(s)`
+                });
+
+                data.forEach(c => {
+                    options += `<option value="${c.id}">
+                        Cita #${c.id} - ${c.fecha_hora}
+                    </option>`;
+                });
+
+            } else {
+                options = '<option value="">-- No tiene citas pendientes --</option>';
+            }
 
             $('#cita_id').html(options);
         });
@@ -252,10 +266,10 @@
 
         $.get(`/admin/citas/${citaId}`, function(cita) {
 
-            // 🔹 Limpiar carrito
             items = [];
+            pagos = [];
 
-            // 🔹 Cargar servicios de la cita
+            // 🔹 cargar servicios
             cita.detalles.forEach(d => {
                 items.push({
                     id: d.servicio_id,
@@ -266,18 +280,19 @@
                 });
             });
 
-            // 🔹 Aplicar seña como pago automático
-            if (cita.seña_monto && cita.seña_monto > 0) {
-                pagos = [{
+            // 🔹 cargar seña
+            if (cita.seña_monto > 0) {
+                pagos.push({
                     metodo: cita.seña_metodo_pago,
                     monto: parseFloat(cita.seña_monto),
                     es_sena: true
-                }];
-            } else {
-                pagos = [];
+                });
             }
 
+            $('#cita_id_hidden').val(cita.id);
+
             renderTodo();
+            irAPaso(3);
         });
     });
 
@@ -340,8 +355,14 @@
     let htmlPagos = '';
     pagos.forEach((p, idx) => {
         htmlPagos += `<li class="list-group-item d-flex justify-content-between p-2">
-            <span><b>${p.metodo.toUpperCase()}</b></span>
-            <span>${p.monto.toLocaleString()} Gs. <button type="button" class="btn btn-xs text-danger ml-2" onclick="eliminarPago(${idx})">×</button></span>
+            <span>
+                <b>${p.metodo.toUpperCase()}</b>
+                ${p.es_sena ? '<span class="badge badge-info ml-2">SEÑA</span>' : ''}
+            </span>
+            <span>
+                ${p.monto.toLocaleString()} Gs.
+                ${!p.es_sena ? `<button type="button" class="btn btn-xs text-danger ml-2" onclick="eliminarPago(${idx})">×</button>` : ''}
+            </span>
         </li>`;
     });
     $('#lista_pagos').html(htmlPagos);
@@ -459,6 +480,11 @@
     }
 
     function eliminarPago(idx) {
+        if (pagos[idx].es_sena) {
+            Swal.fire('Acción no permitida', 'La seña no puede eliminarse', 'warning');
+            return;
+        }
+
         pagos.splice(idx, 1);
         renderTodo();
     }
@@ -498,5 +524,43 @@
 }
         });
     }
+
+    @if(isset($cita) && $cita)
+        let cita = @json($cita);
+
+        // 🔹 Seleccionar cliente automáticamente
+        $('#cliente_id').val(cita.cliente_id).trigger('change');
+
+        // 🔹 Cargar servicios
+        items = [];
+
+        cita.detalles.forEach(d => {
+            items.push({
+                id: d.servicio_id,
+                tipo: 'serv',
+                nombre: d.servicio.nombre,
+                precio: d.precio_unitario,
+                cantidad: d.cantidad
+            });
+        });
+
+        // 🔹 Aplicar seña
+        if (cita.seña_monto > 0) {
+            pagos = [{
+                metodo: cita.seña_metodo_pago,
+                monto: parseFloat(cita.seña_monto),
+                es_sena: true,
+                bloqueado: true
+            }];
+        }
+
+        // 🔹 Guardar cita en hidden
+        $('#cita_id_hidden').val(cita.id);
+
+        renderTodo();
+
+        // 🔹 Ir directo al paso 3 (opcional)
+        irAPaso(3);
+    @endif
 </script>
 @endpush

@@ -25,7 +25,7 @@ class CajaController extends Controller
         }
 
         // Calculamos totales para los cuadritos
-        $ingresos = $cajaAbierta->movimientos->where('tipo', 'ingreso')->sum('monto');
+        $ingresos = $cajaAbierta->movimientos->where('tipo', 'ingreso')->where('metodo_pago', 'efectivo')->sum('monto');
         $egresos = $cajaAbierta->movimientos->where('tipo', 'egreso')->sum('monto');
         $saldo_actual = $cajaAbierta->monto_apertura + $ingresos - $egresos;
 
