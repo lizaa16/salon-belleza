@@ -202,6 +202,37 @@ class CitaController extends Controller
             ->get();
 
         return response()->json($citas);
-}
+    }
 
+    public function calendar()
+    {
+        return view('admin.citas.calendar');
+    }
+
+   // CitaController.php
+    public function events()
+    {
+        $citas = Cita::with('cliente.persona')->get();
+
+        return $citas->map(function ($cita) {
+            return [
+                'id' => $cita->id,
+                // Agregamos el nombre y estado al título o a extendedProps
+                'title' => $cita->cliente->persona->nombre . ' ' . $cita->cliente->persona->apellido,
+                'start' => $cita->fecha_hora,
+                'color' => match ($cita->estado) {
+                    'pendiente' => '#ffc107',
+                    'confirmada' => '#17a2b8',
+                    'finalizada' => '#28a745',
+                    'cancelada' => '#dc3545',
+                    default => '#6c757d'
+                },
+                'extendedProps' => [
+                    'estado' => ucfirst($cita->estado),
+                    'cliente' => $cita->cliente->persona->nombre . ' ' . $cita->cliente->persona->apellido,
+                    'fecha' => \Carbon\Carbon::parse($cita->fecha_hora)->format('d/m/Y H:i')
+                ]
+            ];
+        });
+    }
 }

@@ -55,12 +55,23 @@ Route::middleware('auth')->group(function () {
         // Rutas para la Agenda de Citas
         Route::get('citas/pendientes/{cliente_id}', [CitaController::class, 'pendientes'])
             ->name('citas.pendientes'); // <--- AGREGA ESTA LÍNEA
+
+        Route::get('citas/calendar', [CitaController::class, 'calendar'])
+            ->name('citas.calendar');
+
+        Route::get('citas/events', [CitaController::class, 'events'])
+            ->name('citas.events');
+
         Route::resource('citas', CitaController::class)
             ->names('citas');
+
         Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
             ->name('citas.cancelar');
+            
         // Rutas para ventas-citas
         Route::get('/citas/{id}', [CitaController::class, 'show']);
+        // Eventos citas
+       
 
         // Rutas para la configuyracion visual
         Route::get('configuracion', [SettingController::class, 'index'])

@@ -406,16 +406,16 @@ return [
             'icon' => 'fas fa-chart-line',
         ],
         [
-            'header' => 'AGENDA Y CITAS',
+        'header' => 'AGENDA',
         ],
         [
             'text' => 'Calendario',
-            'url'  => 'admin/citas/calendario', // Ajusta a tu nueva ruta
+            'route'  => 'admin.citas.calendar', // 👈 usar route SIEMPRE
             'icon' => 'fas fa-calendar-alt',
         ],
         [
-            'text'    => 'Agendar Citas',
-            'url'     => 'admin/citas',
+            'text'    => 'Citas',
+            'route'   => 'admin.citas.index',
             'icon'    => 'fas fa-calendar-check',
         ],
         [
