@@ -103,7 +103,7 @@
             </div>
             <div class="card-body">
                 {{-- Botón para cerrar la caja --}}
-                <button class="btn btn-danger btn-block mb-3">
+                <button class="btn btn-danger btn-block mb-3" data-toggle="modal" data-target="#modalCerrarCaja">
                     <i class="fas fa-lock"></i> Cerrar Caja del Día
                 </button>
                 
@@ -158,4 +158,79 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalCerrarCaja">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">Declaración para Cierre de Caja</h5>
+                </div>
+                <form action="{{ route('admin.cajas.cerrar') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <p class="text-muted text-sm">Ingrese los montos físicos que tiene en caja y comprobantes.</p>
+                        
+                        <div class="form-group">
+                            <label>Efectivo Contado (Gs.)</label>
+                            <input type="number" name="monto_real_efectivo" class="form-control form-control-lg" required placeholder="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Total en Vouchers de Tarjeta (Gs.)</label>
+                            <input type="number" name="monto_real_tarjeta" class="form-control" required placeholder="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Total en Transferencias (Gs.)</label>
+                            <input type="number" name="monto_real_transferencia" class="form-control" required placeholder="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="2" placeholder="Notas sobre el turno..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger btn-block">Procesar y Ver Diferencias</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@stop
+
+@section('js')
+<script>
+    document.getElementById('monto_real_input').addEventListener('input', function() {
+        const saldoSistema = {{ $saldo_actual }};
+        const montoReal = parseFloat(this.value) || 0;
+        const diferencia = montoReal - saldoSistema;
+        
+        const alertDiv = document.getElementById('resultado_arqueo');
+        const titulo = document.getElementById('titulo_diferencia');
+        const mensaje = document.getElementById('mensaje_diferencia');
+        const txtObs = document.getElementById('observaciones');
+        const labelObs = document.getElementById('label_observaciones');
+        
+        alertDiv.classList.remove('d-none', 'alert-success', 'alert-danger', 'alert-warning');
+        const formatter = new Intl.NumberFormat('es-PY');
+
+        if (diferencia === 0) {
+            alertDiv.classList.add('alert-success');
+            titulo.innerHTML = '<i class="fas fa-check"></i> Caja Cuadrada';
+            mensaje.innerText = "Todo coincide.";
+            txtObs.required = false; // No es obligatorio si está perfecto
+            labelObs.innerHTML = "Observaciones (Opcional)";
+        } else {
+            // Si sobra o falta, cambiamos el color y lo hacemos obligatorio
+            const esSobrante = diferencia > 0;
+            alertDiv.classList.add(esSobrante ? 'alert-warning' : 'alert-danger');
+            titulo.innerHTML = esSobrante ? '<i class="fas fa-exclamation-circle"></i> Sobrante' : '<i class="fas fa-times-circle"></i> Faltante';
+            mensaje.innerText = (esSobrante ? "Sobran " : "Faltan ") + formatter.format(Math.abs(diferencia)) + " Gs.";
+            
+            txtObs.required = true; // ¡OBLIGATORIO!
+            labelObs.innerHTML = 'Observaciones <span class="text-danger">(Obligatorio por descuadre)</span>';
+        }
+    });
+</script>
 @stop

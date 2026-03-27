@@ -16,8 +16,13 @@ class Caja extends Model
         'monto_cierre', 
         'monto_real_en_caja', 
         'diferencia', 
-        'estado'
-    ];
+        'estado',
+        'observaciones',
+        'total_tarjeta_sistema',
+            'total_tarjeta_real',
+            'total_transferencia_sistema',
+            'total_transferencia_real',
+        ];
 
     // Relación con el usuario que abrió la caja
     public function usuario()

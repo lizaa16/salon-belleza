@@ -59,6 +59,8 @@ Route::middleware('auth')->group(function () {
             ->names('citas');
         Route::patch('citas/{cita}/cancelar', [CitaController::class, 'cancelar'])
             ->name('citas.cancelar');
+        // Rutas para ventas-citas
+        Route::get('/citas/{id}', [CitaController::class, 'show']);
 
         // Rutas para la configuyracion visual
         Route::get('configuracion', [SettingController::class, 'index'])
@@ -66,6 +68,7 @@ Route::middleware('auth')->group(function () {
         Route::post('configuracion', [SettingController::class, 'update'])
         ->name('settings.update');
 
+        //Routas Productos
         Route::resource('productos', ProductoController::class)
         ->names('productos');
 
@@ -76,15 +79,19 @@ Route::middleware('auth')->group(function () {
                 ->name('cajas.abrir');
             Route::post('cajas/movimiento', [CajaController::class, 'registrarMovimiento'])
                 ->name('cajas.movimiento');
+            // Rutas para cierre-caja
+            Route::post('cajas/cerrar', [CajaController::class, 'cerrar'])
+                ->name('cajas.cerrar');
+            Route::get('cajas/resumen/{id}', [CajaController::class, 'verResumen'])
+                ->name('cajas.resumen');
+            Route::get('reportes/cajas', [CajaController::class, 'reporteHistorial'])
+                ->name('reportes.cajas');
 
         // Rutas para ventas
         Route::resource('ventas', VentaController::class)
             ->names('ventas');
         Route::get('/ventas/{id}', [VentaController::class, 'show'])
             ->name('ventas.show');
-
-        // Rutas para ventas-citas
-        Route::get('/citas/{id}', [CitaController::class, 'show']);
         
     });
 

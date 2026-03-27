@@ -398,14 +398,26 @@ return [
 
     'menu' => [
         [
-            'header' => 'PRINCIPAL',
+        'header' => 'PRINCIPAL',
         ],
         [
             'text' => 'Dashboard',
-            'url'  => 'dashboard',
-            'icon' => 'fas fa-tachometer-alt',
+            'route'  => 'dashboard', // Usa 'route' en lugar de 'url' si tienes nombres definidos
+            'icon' => 'fas fa-chart-line',
         ],
-
+        [
+            'header' => 'AGENDA Y CITAS',
+        ],
+        [
+            'text' => 'Calendario',
+            'url'  => 'admin/citas/calendario', // Ajusta a tu nueva ruta
+            'icon' => 'fas fa-calendar-alt',
+        ],
+        [
+            'text'    => 'Agendar Citas',
+            'url'     => 'admin/citas',
+            'icon'    => 'fas fa-calendar-check',
+        ],
         [
             'header' => 'GESTIÓN',
         ],
@@ -445,14 +457,6 @@ return [
             ],
         ],
         [
-            'header' => 'AGENDA',
-        ],
-        [
-            'text'    => 'Agendar Citas',
-            'url'     => 'admin/citas',
-            'icon'    => 'fas fa-calendar-check',
-        ],
-        [
             'header' => 'CONFIGURACIÓN',
         ],
         [
@@ -464,9 +468,14 @@ return [
             'header' => 'CAJA',
         ],
         [
-            'text' => 'Apertura de Caja',
+            'text' => 'Gestión de Caja',
             'url'  => 'admin/caja',
-            'icon' => 'fas fa-fw fa-door-open',
+            'icon' => 'fas fa-fw fa-cash-register', // Cambié el icono a una caja registradora
+        ],
+        [
+            'text' => 'Historial de Cierres',
+            'url'  => 'admin/reportes/cajas',
+            'icon' => 'fas fa-fw fa-history',
         ],
         [
             'header' => 'VENTAS',
@@ -475,7 +484,7 @@ return [
             'text' => 'Registrar Venta',
             'url'  => 'admin/ventas',
             'icon' => 'fas fa-fw fa-shopping-cart',
-        ]
+        ],
     ],
 
     /*
